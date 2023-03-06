@@ -13,8 +13,7 @@ def load_config(path: str = "../appsettings.json"):
                 return config
         except JSONDecodeError:
             raise FileNotFoundError(f"A configuration file named {p.split('/')[-1]} can not be parsed.")
-        finally:
+        except:
             continue
-
     else:
         raise FileNotFoundError(f"A configuration file named {path.split('/')[-1]} was not found")
