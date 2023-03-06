@@ -6,7 +6,7 @@ from config import load_config
 
 
 async def main():
-    config = load_config('../appsettings.json')
+    config = load_config()
     bot = TgBot(config)
     await bot.start()
     await sleep(60)
@@ -15,4 +15,3 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
-
