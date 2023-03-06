@@ -1,4 +1,5 @@
-from telegram import constants, Update
+import telegram
+from telegram import constants, Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import CommandHandler, ContextTypes, Application
 
 
@@ -36,6 +37,14 @@ class TgBot:
         print("Telegram bot shut down")
 
     async def greet(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        buttons = [[
+            "Подписка",
+            "Личный кабинет",
+            "Помощь"
+        ]]
+
+        reply_markup = ReplyKeyboardMarkup(buttons)
+
         await context.bot.send_message(
             chat_id=update.effective_user.id,
             text=(
@@ -50,5 +59,7 @@ class TgBot:
                 f"подписку на 7 дней."
             ),
             parse_mode=constants.ParseMode.HTML,
-            disable_web_page_preview=True
+            disable_web_page_preview=True,
+            reply_markup=reply_markup
         )
+
