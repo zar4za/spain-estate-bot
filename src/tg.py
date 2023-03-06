@@ -1,29 +1,45 @@
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, ContextTypes, Application
+from telegram.ext import CommandHandler, ContextTypes, Application
 
 
 class TgBot:
-    def __init__(self, token, id_whitelist: list):
-        self.whitelist = id_whitelist
+    def __init__(self, config):
+        token = config["telegram"]["token"]
+        whitelist = config["telegram"]["whitelist"]
+
+        self.use_whitelist = False
         self.app = Application.builder().token(token).build()
 
-        self.app.add_handler(CommandHandler('start', self.start))
+        message = "OFF"
 
-    async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if update.effective_user.id not in self.whitelist:
-            return
+        if any(whitelist):
+            self.use_whitelist = True
+            self.whitelist = whitelist
+            message = "ON"
 
-        await context.bot.send_message(chat_id=update.effective_user.id, text='Бот запущен.')
+        print("Whitelist mode is " + message)
 
-    def run(self):
-        self.app.run_polling()
+    async def start(self):
+        print("Registering command handlers")
+        self.app.add_handler(CommandHandler("start", greet))
+        print("Starting Telegram bot")
+        await self.app.initialize()
+        await self.app.start()
+        await self.app.updater.start_polling()
+        print("Telegram bot started")
 
-    async def send_article(self, article):
-        text = article['title'] + article['specs'] + article['desc'] + 'idealista.com' + article['url']
+    async def stop(self):
+        print("Shutting down Telegram bot")
+        await self.app.updater.stop()
+        await self.app.stop()
+        await self.app.shutdown()
+        print("Telegram bot shut down")
 
-        for userid in self.whitelist:
-            try:
-                print('Отправляю пользователю' + str(userid))
-                await self.app.bot.send_message(chat_id=userid, text=text)
-            except:
-                print('Ошибка отправки пользователю' + str(userid))
+
+async def greet(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await context.bot.send_message(
+        chat_id=update.effective_user.id,
+        text=(
+            "Приветствую в этом чудесном боте!"
+        )
+    )
