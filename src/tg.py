@@ -1,6 +1,8 @@
+import datetime
+
 import telegram
 from telegram import constants, Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
-from telegram.ext import CommandHandler, ContextTypes, Application
+from telegram.ext import CommandHandler, ContextTypes, Application, MessageHandler, filters
 
 
 class TgBot:
@@ -23,6 +25,7 @@ class TgBot:
     async def start(self):
         print("Registering command handlers")
         self.app.add_handler(CommandHandler("start", self.greet))
+        self.app.add_handler(MessageHandler(filters.Regex("Подписка"), self.on_subscription))
         print("Starting Telegram bot")
         await self.app.initialize()
         await self.app.start()
@@ -63,3 +66,26 @@ class TgBot:
             reply_markup=reply_markup
         )
 
+    async def on_subscription(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        used_trial = False
+        valid_until = datetime.datetime.utcnow()
+        buttons = ['Главная']
+
+        if not used_trial:
+            buttons.append('Пробная подписка')
+        if valid_until < datetime.datetime.utcnow():
+            buttons.append('Купить подписку на месяц')
+        else:
+            buttons.append('Приостановить подписку')
+
+        reply_markup = ReplyKeyboardMarkup([buttons])
+
+        await context.bot.send_message(
+            chat_id=update.effective_user.id,
+            text=(
+                f"Ваша подписка действительна до: {valid_until}\n"
+            ),
+            parse_mode=constants.ParseMode.HTML,
+            disable_web_page_preview=True,
+            reply_markup=reply_markup
+        )
