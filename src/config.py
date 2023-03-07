@@ -10,6 +10,7 @@ def load_config(path: str = "../appsettings.json"):
         try:
             with open(p, "r") as file:
                 config = json.load(file)
+                print(f"Loaded config {p.split('/')[-1]}")
                 return config
         except JSONDecodeError:
             raise FileNotFoundError(f"A configuration file named {p.split('/')[-1]} can not be parsed.")
