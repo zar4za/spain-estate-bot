@@ -96,8 +96,28 @@ class Repository:
 
     def insert_many_articles(self, articles: list):
         cursor = self.__connection.cursor()
-        cursor.execute()
+        new_articles = []
+        for article in articles:
+            cursor.execute(
+                "INSERT INTO articles (articleid) VALUES (%s) ON CONFLICT DO NOTHING",
+                (article.article_id,)
+            )
+            if cursor.rowcount > 0:
+                new_articles.append(article)
+
         self.__connection.commit()
+        return new_articles
+
+    def get_userids_to_notify(self):
+        cursor = self.__connection.cursor()
+        cursor.execute(
+            "SELECT userid "
+            "FROM users "
+            "WHERE valid_until > %s",
+            (datetime.datetime.utcnow(),)
+        )
+        userids = cursor.fetchall()
+        return userids
 
 
 class User:
