@@ -1,17 +1,19 @@
 import datetime
 
-import telegram
 from telegram import constants, Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import CommandHandler, ContextTypes, Application, MessageHandler, filters
 
+from src.repository import Repository, User
+
 
 class TgBot:
-    def __init__(self, config):
+    def __init__(self, config, repository: Repository):
         token = config["telegram"]["token"]
         whitelist = config["telegram"]["whitelist"]
 
         self.use_whitelist = False
         self.app = Application.builder().token(token).build()
+        self.repository = repository
 
         message = "OFF"
 
@@ -26,6 +28,7 @@ class TgBot:
         print("Registering command handlers")
         self.app.add_handler(CommandHandler("start", self.greet))
         self.app.add_handler(MessageHandler(filters.Regex("Подписка"), self.on_subscription))
+        self.app.add_handler(MessageHandler(filters.Regex("Пробная подписка"), self.on_trial_subscribe))
         print("Starting Telegram bot")
         await self.app.initialize()
         await self.app.start()
@@ -40,13 +43,18 @@ class TgBot:
         print("Telegram bot shut down")
 
     async def greet(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        buttons = [[
-            "Подписка",
-            "Личный кабинет",
-            "Помощь"
-        ]]
+        buttons = [
+            ["Подписка"],
+            ["Личный кабинет"],
+            ["Помощь"]
+        ]
 
         reply_markup = ReplyKeyboardMarkup(buttons)
+
+        registered = self.repository.is_user_registered(update.effective_user.id)
+        if not registered:
+            user = User(update.effective_user.id)
+            self.repository.insert_user(user)
 
         await context.bot.send_message(
             chat_id=update.effective_user.id,
@@ -67,24 +75,52 @@ class TgBot:
         )
 
     async def on_subscription(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        used_trial = False
-        valid_until = datetime.datetime.utcnow()
-        buttons = ['Главная']
+        used_trial = self.repository.is_trial_used(update.effective_user.id)
+        valid_until = None
+        buttons = [['Главная']]
 
         if not used_trial:
-            buttons.append('Пробная подписка')
-        if valid_until < datetime.datetime.utcnow():
-            buttons.append('Купить подписку на месяц')
+            buttons.append(['Пробная подписка'])
+        if valid_until is None or valid_until < datetime.datetime.utcnow():
+            buttons.append(['Купить подписку на месяц'])
         else:
-            buttons.append('Приостановить подписку')
+            buttons.append(['Приостановить подписку'])
 
-        reply_markup = ReplyKeyboardMarkup([buttons])
+        reply_markup = ReplyKeyboardMarkup(buttons)
 
         await context.bot.send_message(
             chat_id=update.effective_user.id,
             text=(
                 f"Ваша подписка действительна до: {valid_until}\n"
             ),
+            parse_mode=constants.ParseMode.HTML,
+            disable_web_page_preview=True,
+            reply_markup=reply_markup
+        )
+
+    async def on_trial_subscribe(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        used_trial = self.repository.is_trial_used(update.effective_user.id)
+
+        buttons = [
+            ["Подписка"],
+            ["Личный кабинет"],
+            ["Помощь"]
+        ]
+        reply_markup = ReplyKeyboardMarkup(buttons)
+
+        if used_trial:
+            msg = (
+                f"Ошибка. Вы уже использовали пробную подписку."
+            )
+        else:
+            expires = self.repository.activate_trial(update.effective_user.id)
+            msg = (
+                f"Пробная подписка оформлена.\n"
+                f"Действительна до: {expires}"
+            )
+        await context.bot.send_message(
+            chat_id=update.effective_user.id,
+            text=msg,
             parse_mode=constants.ParseMode.HTML,
             disable_web_page_preview=True,
             reply_markup=reply_markup
