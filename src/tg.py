@@ -29,6 +29,9 @@ class TgBot:
         self.app.add_handler(CommandHandler("start", self.greet))
         self.app.add_handler(MessageHandler(filters.Regex("Подписка"), self.on_subscription))
         self.app.add_handler(MessageHandler(filters.Regex("Пробная подписка"), self.on_trial_subscribe))
+        self.app.add_handler(MessageHandler(filters.Regex("Главная"), self.on_main))
+        self.app.add_handler(MessageHandler(filters.Regex("Личный кабинет"), self.on_account))
+        self.app.add_handler(MessageHandler(filters.Regex("Помощь"), self.on_help))
         print("Starting Telegram bot")
         await self.app.initialize()
         await self.app.start()
@@ -76,7 +79,7 @@ class TgBot:
 
     async def on_subscription(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         used_trial = self.repository.is_trial_used(update.effective_user.id)
-        valid_until = None
+        valid_until = self.repository.get_expiration(update.effective_user.id)
         buttons = [['Главная']]
 
         if not used_trial:
@@ -123,5 +126,72 @@ class TgBot:
             text=msg,
             parse_mode=constants.ParseMode.HTML,
             disable_web_page_preview=True,
+            reply_markup=reply_markup
+        )
+
+    async def on_main(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        buttons = [
+            ["Подписка"],
+            ["Личный кабинет"],
+            ["Помощь"]
+        ]
+        reply_markup = ReplyKeyboardMarkup(buttons)
+
+        await context.bot.send_message(
+            chat_id=update.effective_user.id,
+            text=(
+                "Главная страница.\n"
+                "Уведомления: <b>включены</b>"
+            ),
+            parse_mode=constants.ParseMode.HTML,
+            disable_web_page_preview=True,
+            reply_markup=reply_markup
+        )
+
+    async def on_account(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        buttons = [
+            ["Подписка"],
+            ["Личный кабинет"],
+            ["Помощь"]
+        ]
+        reply_markup = ReplyKeyboardMarkup(buttons)
+
+        subscription = "отключена"
+        if self.repository.get_expiration(update.effective_user.id) > datetime.datetime.utcnow():
+            subscription = "действительна"
+
+        await context.bot.send_message(
+            chat_id=update.effective_user.id,
+            text=(
+                "Информация о вашем аккаунте.\n\n"
+                f"Ваш логин: "
+                f"<b><a href=\"tg://user?id={update.effective_user.id}\">@{update.effective_user.username}</a></b>\n"
+                f"Ваш id: <b>{update.effective_user.id}</b>\n"
+                f"Подписка: <b>{subscription}</b>"
+            ),
+            parse_mode=constants.ParseMode.HTML,
+            disable_web_page_preview=True,
+            reply_markup=reply_markup
+        )
+
+    async def on_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        buttons = [
+            ["Подписка"],
+            ["Личный кабинет"],
+            ["Помощь"]
+        ]
+        reply_markup = ReplyKeyboardMarkup(buttons)
+
+        subscription = "отключена"
+        if self.repository.get_expiration(update.effective_user.id) > datetime.datetime.utcnow():
+            subscription = "действительна"
+
+        await context.bot.send_message(
+            chat_id=update.effective_user.id,
+            text=(
+                "Поддержка: "
+                f"<b><a href=\"tg://user?id=348653040\">@zar4za</a></b>\n"
+            ),
+            parse_mode=constants.ParseMode.HTML,
             reply_markup=reply_markup
         )

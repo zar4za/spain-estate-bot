@@ -84,6 +84,16 @@ class Repository:
         print(f"DB: Activated subscription for user with id {userid}. Expires on {expiration}.")
         return expiration
 
+    def get_expiration(self, userid) -> datetime.datetime:
+        cursor = self.__connection.cursor()
+        cursor.execute(
+            "SELECT valid_until "
+            "FROM users "
+            "WHERE userid = %s",
+            (userid,)
+        )
+        return cursor.fetchone()[0]
+
     def insert_many_articles(self, articles: list):
         cursor = self.__connection.cursor()
         cursor.execute()
