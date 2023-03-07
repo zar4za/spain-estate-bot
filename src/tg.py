@@ -195,3 +195,20 @@ class TgBot:
             parse_mode=constants.ParseMode.HTML,
             reply_markup=reply_markup
         )
+
+    async def send_article(self, userid, article):
+        await self.app.bot.send_message(
+            chat_id=userid,
+            text=(
+                f"<b>{article.title}</b>\n"
+                f"<b>Цена: {article.price}</b>\n"
+                f"Количество комнат: {article.room_count}\n"
+                f"Площадь: {article.area}\n"
+                f"Этаж: {article.floor}\n"
+                f"Лифт: {'имеется' if article.elevator else 'отсутствует'}"
+            ),
+            parse_mode=constants.ParseMode.HTML,
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(text='Открыть объявление', url=article.url)]
+            ])
+        )

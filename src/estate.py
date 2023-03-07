@@ -1,19 +1,25 @@
+import re
+from asyncio import sleep
+
 import requests
 from bs4 import BeautifulSoup
+
+from src.repository import Repository
+from src.tg import TgBot
 
 
 def aggregate(item):
     link = item.find('a', class_='item-link')
-    specs = map(lambda x: x.text, item.findAll('span', class_='item-detail'))
-    desc = item.find('div', class_='item-description')
+    specs = list(map(lambda x: x.text, item.findAll('span', class_='item-detail')))
+    price = item.find('span', class_='item-price')
 
-    return {
-        'id': int(link.attrs['href'].split('/')[3]),
-        'title': link.text[:64],
-        'url': link.attrs['href'],
-        'specs': ', '.join(specs)[:256],
-        'desc': desc.text[:512]
-    }
+    return Article(
+        article_id=int(link.attrs['href'].split('/')[3]),
+        title=link.text[:64],
+        url=link.attrs['href'],
+        specs=specs,
+        price=price.text
+    )
 
 
 class IdealistaScraper:
@@ -48,4 +54,39 @@ class IdealistaScraper:
         articles = soup.findAll('article', class_='item')
         articles = list(map(aggregate, articles))
         return articles
+
+
+class Article:
+    def __init__(self, article_id, title: str, url: str, price: str, specs: list):
+        self.article_id = article_id
+        self.title = title
+        self.url = 'https://idealista.com' + url
+        self.price = price
+        self.room_count = str(specs[0])
+        self.area = str(specs[1])
+        self.floor = specs[2]
+        self.elevator = str(specs[2]).find('лифтом') != -1
+
+
+class ScraperService:
+    def __init__(self, scraper: IdealistaScraper, repo: Repository, bot: TgBot):
+        self.scraper = scraper
+        self.repo = repo
+        self.bot = bot
+
+    async def start(self, config):
+        url = (f"https://www.idealista.com/ru/venta-viviendas/{config['filter']['region']}/"
+               f"{config['filter']['filters']}publicado_ultimas-48-horas/?ordenado-por=fecha-publicacion-desc")
+
+        while True:
+            articles = self.scraper.get_articles(url)
+            new_articles = self.repo.insert_many_articles(articles)
+            users = self.repo.get_userids_to_notify()
+
+            for article in new_articles:
+                for userid in users:
+                    await self.bot.send_article(userid[0], article)
+                    await sleep(0.2)
+
+            await sleep(300)
 
