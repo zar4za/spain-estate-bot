@@ -5,3 +5,10 @@ CREATE TABLE articles
     specs VARCHAR(256),
     description VARCHAR(512)
 )
+CREATE TABLE users
+(
+    userid integer NOT NULL,
+    trial boolean,
+    valid_until timestamp without time zone,
+    CONSTRAINT users_pkey PRIMARY KEY (userid)
+)

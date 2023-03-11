@@ -16,6 +16,6 @@ services:
     build: .
     links:
       - pgdb
-    volumes:
-      pgdata:
-        driver: local
+volumes:
+  pgdata:
+    driver: local
