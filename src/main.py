@@ -9,6 +9,7 @@ from config import load_config
 
 async def main():
     config = load_config()
+
     repo = Repository(config)
     bot = TgBot(config, repo)
     scraper = IdealistaScraper()
