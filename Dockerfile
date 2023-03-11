@@ -2,9 +2,7 @@ FROM python:3.10
 COPY requirements.txt .
 RUN pip install --user -r requirements.txt
 
-COPY appsettings.json appsettings.json
+COPY ./src ./app
 
-WORKDIR /src
-COPY ./src .
-
+WORKDIR /app
 CMD ["python", "-u", "./main.py"]

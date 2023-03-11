@@ -95,7 +95,7 @@ class TgBot:
         await context.bot.send_message(
             chat_id=update.effective_user.id,
             text=(
-                f"Ваша подписка действительна до: {valid_until}\n"
+                f"Ваша подписка действительна до: {valid_until if not None and valid_until > datetime.datetime.utcnow() else 'нет действительной подписки'}\n"
             ),
             parse_mode=constants.ParseMode.HTML,
             disable_web_page_preview=True,
@@ -158,7 +158,8 @@ class TgBot:
         reply_markup = ReplyKeyboardMarkup(buttons)
 
         subscription = "отключена"
-        if self.repository.get_expiration(update.effective_user.id) > datetime.datetime.utcnow():
+        exp = self.repository.get_expiration(update.effective_user.id)
+        if exp is not None and exp > datetime.datetime.utcnow():
             subscription = "действительна"
 
         await context.bot.send_message(
@@ -182,10 +183,6 @@ class TgBot:
             ["Помощь"]
         ]
         reply_markup = ReplyKeyboardMarkup(buttons)
-
-        subscription = "отключена"
-        if self.repository.get_expiration(update.effective_user.id) > datetime.datetime.utcnow():
-            subscription = "действительна"
 
         await context.bot.send_message(
             chat_id=update.effective_user.id,

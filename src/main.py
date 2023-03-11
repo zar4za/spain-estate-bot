@@ -1,5 +1,4 @@
 import asyncio
-from asyncio import sleep
 
 from estate import IdealistaScraper, ScraperService
 from repository import Repository
