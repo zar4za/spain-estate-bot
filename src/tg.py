@@ -3,7 +3,7 @@ import datetime
 from telegram import constants, Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import CommandHandler, ContextTypes, Application, MessageHandler, filters
 
-from src.repository import Repository, User
+from repository import Repository, User
 
 
 class TgBot:

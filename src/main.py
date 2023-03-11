@@ -1,8 +1,8 @@
 import asyncio
 from asyncio import sleep
 
-from src.estate import IdealistaScraper, ScraperService
-from src.repository import Repository
+from estate import IdealistaScraper, ScraperService
+from repository import Repository
 from tg import TgBot
 from config import load_config
 

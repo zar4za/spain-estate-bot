@@ -5,7 +5,7 @@ import uuid
 
 import requests
 
-from src.config import load_config
+from config import load_config
 
 
 class LavaFacade:

@@ -4,7 +4,7 @@ RUN pip install --user -r requirements.txt
 
 COPY appsettings.json appsettings.json
 
-WORKDIR /app
+WORKDIR /src
 COPY ./src .
 
 CMD ["python", "-u", "./main.py"]

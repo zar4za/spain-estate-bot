@@ -4,8 +4,8 @@ from asyncio import sleep
 import requests
 from bs4 import BeautifulSoup
 
-from src.repository import Repository
-from src.tg import TgBot
+from repository import Repository
+from tg import TgBot
 
 
 def aggregate(item):
