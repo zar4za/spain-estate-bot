@@ -84,6 +84,8 @@ class TgBot:
 
         if not used_trial:
             buttons.append(['Пробная подписка'])
+        if valid_until is None:
+            valid_until = "'нет действительной подписки'"
 
         #if valid_until is None or valid_until < datetime.datetime.utcnow():
         #    buttons.append(['Купить подписку на месяц'])
@@ -95,7 +97,7 @@ class TgBot:
         await context.bot.send_message(
             chat_id=update.effective_user.id,
             text=(
-                f"Ваша подписка действительна до: {valid_until if not None and valid_until > datetime.datetime.utcnow() else 'нет действительной подписки'}\n"
+                f"Ваша подписка действительна до: {valid_until}\n"
             ),
             parse_mode=constants.ParseMode.HTML,
             disable_web_page_preview=True,
