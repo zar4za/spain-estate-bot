@@ -84,10 +84,11 @@ class TgBot:
 
         if not used_trial:
             buttons.append(['Пробная подписка'])
-        if valid_until is None or valid_until < datetime.datetime.utcnow():
-            buttons.append(['Купить подписку на месяц'])
-        else:
-            buttons.append(['Приостановить подписку'])
+
+        #if valid_until is None or valid_until < datetime.datetime.utcnow():
+        #    buttons.append(['Купить подписку на месяц'])
+        #else:
+        #    buttons.append(['Приостановить подписку'])
 
         reply_markup = ReplyKeyboardMarkup(buttons)
 
