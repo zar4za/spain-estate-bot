@@ -1,3 +1,4 @@
+import logging
 import re
 from asyncio import sleep
 
@@ -6,6 +7,8 @@ from bs4 import BeautifulSoup
 
 from repository import Repository
 from tg import TgBot
+
+logger = logging.getLogger(__name__)
 
 
 def aggregate(item):
@@ -45,10 +48,14 @@ class IdealistaScraper:
             'upgrade-insecure-requests': '1'
         }
         self.session.headers.update(self.headers)
+        logger.info("Initialized scraper.")
 
     def get_articles(self, url):
         page = self.session.get(url)
-        print(page.status_code)
+        if page.status_code == 200:
+            logger.info("Loaded page.")
+        else:
+            logger.warning(f"Failed to load page. Status code: {page.status_code}")
 
         soup = BeautifulSoup(page.text, 'html.parser')
         articles = soup.findAll('article', class_='item')
@@ -77,6 +84,7 @@ class ScraperService:
     async def start(self, config):
         url = (f"https://www.idealista.com/ru/venta-viviendas/{config['filter']['region']}/"
                f"{config['filter']['filters']}publicado_ultimas-48-horas/?ordenado-por=fecha-publicacion-desc")
+        logger.info("Started polling service.")
 
         while True:
             articles = self.scraper.get_articles(url)
@@ -88,5 +96,6 @@ class ScraperService:
                     await self.bot.send_article(userid[0], article)
                     await sleep(0.2)
 
+            logger.info("Idling for next 5 minutes.")
             await sleep(300)
 
