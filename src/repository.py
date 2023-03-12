@@ -1,7 +1,10 @@
 import datetime
+import logging
 from asyncio import sleep
 
 import psycopg2
+
+logger = logging.getLogger(__name__)
 
 
 class Repository:
@@ -14,7 +17,7 @@ class Repository:
 
     async def connect(self):
         for i in range(3):
-            print(f"Trying to connect to Postgres. Attempt {i + 1}")
+            logger.info(f"Trying to connect to Postgres. Attempt {i + 1}")
             try:
                 self.__connection = psycopg2.connect(
                     dbname=self.__dbname,
@@ -22,10 +25,10 @@ class Repository:
                     password=self.__password,
                     host=self.__host
                 )
-                print("Connected to Postgres")
+                logger.info("Connected to Postgres")
                 break
             except:
-                print("Cannot connect to Postgres")
+                logger.error("Cannot connect to Postgres")
                 await sleep(5)
         else:
             raise ConnectionError("Can not connect to db after 3 attempts")
@@ -34,14 +37,16 @@ class Repository:
         cursor = self.__connection.cursor()
         cursor.execute("SELECT * FROM users WHERE userid = %s", (userid,))
         user = cursor.fetchone()
+        logger.info(f"Fetching user with id {userid}")
         return user is not None
 
     def is_trial_used(self, userid) -> bool:
         cursor = self.__connection.cursor()
         cursor.execute("SELECT * FROM users WHERE userid = %s", (userid,))
         user = cursor.fetchone()
-
+        logger.info(f"Fetching user with id {userid}")
         if user is None:
+            logger.warning(f"User with id {userid} doesnot exist")
             return False
         else:
             return user[1]
@@ -54,7 +59,7 @@ class Repository:
             (user.userid, False, None)
         )
         self.__connection.commit()
-        print(f"DB: Registered new user with id {user.userid}.")
+        logger.info(f"Registered new user with id {user.userid}.")
 
     def activate_trial(self, userid) -> datetime.datetime:
         expiration = datetime.datetime.utcnow()
@@ -67,7 +72,7 @@ class Repository:
             (expiration, userid)
         )
         self.__connection.commit()
-        print(f"DB: Activated trial for user with id {userid}. Expires on {expiration}.")
+        logger.info(f"Activated trial for user with id {userid}. Expires on {expiration}.")
         return expiration
 
     def activate_subscription(self, userid, days) -> datetime.datetime:
@@ -81,7 +86,7 @@ class Repository:
             (expiration, userid)
         )
         self.__connection.commit()
-        print(f"DB: Activated subscription for user with id {userid}. Expires on {expiration}.")
+        logger.info(f"Activated subscription for user with id {userid}. Expires on {expiration}.")
         return expiration
 
     def get_expiration(self, userid) -> datetime.datetime:
@@ -92,6 +97,7 @@ class Repository:
             "WHERE userid = %s",
             (userid,)
         )
+        logger.info(f"Fetching expiration for user with id {userid}")
         return cursor.fetchone()[0]
 
     def insert_many_articles(self, articles: list):
@@ -104,6 +110,7 @@ class Repository:
             )
             if cursor.rowcount > 0:
                 new_articles.append(article)
+                logger.info(f"Inserted article with id {article.article_id}")
 
         self.__connection.commit()
         return new_articles
@@ -116,6 +123,7 @@ class Repository:
             "WHERE valid_until > %s",
             (datetime.datetime.utcnow(),)
         )
+        logger.info("Fetching users to notify.")
         userids = cursor.fetchall()
         return userids
 
