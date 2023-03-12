@@ -12,7 +12,7 @@ class TgBot:
         whitelist = config["telegram"]["whitelist"]
 
         self.use_whitelist = False
-        self.app = Application.builder().token(token).build()
+        self.app = Application.builder().token(token).get_updates_http_version('1.1').http_version('1.1').build()
         self.repository = repository
 
         message = "OFF"
