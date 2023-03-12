@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from estate import IdealistaScraper, ScraperService
 from repository import Repository
@@ -7,6 +8,7 @@ from config import load_config
 
 
 async def main():
+    logging.basicConfig(level=logging.INFO)
     config = load_config()
 
     repo = Repository(config)
