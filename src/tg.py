@@ -1,9 +1,12 @@
 import datetime
+import logging
 
 from telegram import constants, Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import CommandHandler, ContextTypes, Application, MessageHandler, filters
 
 from repository import Repository, User
+
+logger = logging.getLogger(__name__)
 
 
 class TgBot:
@@ -15,35 +18,35 @@ class TgBot:
         self.app = Application.builder().token(token).get_updates_http_version('1.1').http_version('1.1').build()
         self.repository = repository
 
-        message = "OFF"
+        message = "OFF."
 
         if any(whitelist):
             self.use_whitelist = True
             self.whitelist = whitelist
-            message = "ON"
+            message = "ON."
 
-        print("Whitelist mode is " + message)
+        logger.warning("Whitelist mode is " + message)
 
     async def start(self):
-        print("Registering command handlers")
+        logger.info("Registering command handlers.")
         self.app.add_handler(CommandHandler("start", self.greet))
         self.app.add_handler(MessageHandler(filters.Regex("Подписка"), self.on_subscription))
         self.app.add_handler(MessageHandler(filters.Regex("Пробная подписка"), self.on_trial_subscribe))
         self.app.add_handler(MessageHandler(filters.Regex("Главная"), self.on_main))
         self.app.add_handler(MessageHandler(filters.Regex("Личный кабинет"), self.on_account))
         self.app.add_handler(MessageHandler(filters.Regex("Помощь"), self.on_help))
-        print("Starting Telegram bot")
+        logger.info("Starting Telegram bot.")
         await self.app.initialize()
         await self.app.start()
         await self.app.updater.start_polling()
-        print("Telegram bot started")
+        logger.info("Telegram bot started.")
 
     async def stop(self):
-        print("Shutting down Telegram bot")
+        logger.info("Shutting down Telegram bot.")
         await self.app.updater.stop()
         await self.app.stop()
         await self.app.shutdown()
-        print("Telegram bot shut down")
+        logger.info("Telegram bot shut down.")
 
     async def greet(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         buttons = [
@@ -76,6 +79,7 @@ class TgBot:
             disable_web_page_preview=True,
             reply_markup=reply_markup
         )
+        logger.info(f"Responded on command {update.effective_message.text} to user with id {update.effective_user.id}.")
 
     async def on_subscription(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         used_trial = self.repository.is_trial_used(update.effective_user.id)
@@ -103,6 +107,7 @@ class TgBot:
             disable_web_page_preview=True,
             reply_markup=reply_markup
         )
+        logger.info(f"Responded on command {update.effective_message.text} to user with id {update.effective_user.id}.")
 
     async def on_trial_subscribe(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         used_trial = self.repository.is_trial_used(update.effective_user.id)
@@ -131,6 +136,7 @@ class TgBot:
             disable_web_page_preview=True,
             reply_markup=reply_markup
         )
+        logger.info(f"Responded on command {update.effective_message.text} to user with id {update.effective_user.id}.")
 
     async def on_main(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         buttons = [
@@ -150,6 +156,7 @@ class TgBot:
             disable_web_page_preview=True,
             reply_markup=reply_markup
         )
+        logger.info(f"Responded on command {update.effective_message.text} to user with id {update.effective_user.id}.")
 
     async def on_account(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         buttons = [
@@ -177,6 +184,7 @@ class TgBot:
             disable_web_page_preview=True,
             reply_markup=reply_markup
         )
+        logger.info(f"Responded on command {update.effective_message.text} to user with id {update.effective_user.id}.")
 
     async def on_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         buttons = [
@@ -195,6 +203,7 @@ class TgBot:
             parse_mode=constants.ParseMode.HTML,
             reply_markup=reply_markup
         )
+        logger.info(f"Responded on command {update.effective_message.text} to user with id {update.effective_user.id}.")
 
     async def send_article(self, userid, article):
         await self.app.bot.send_message(
@@ -212,3 +221,4 @@ class TgBot:
                 [InlineKeyboardButton(text='Открыть объявление', url=article.url)]
             ])
         )
+        logger.info(f"Sent an article {article.article_id} to user with id {userid}.")
